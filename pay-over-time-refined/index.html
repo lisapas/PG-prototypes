@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pay Over Time · Refined</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap">
+<style>
+
+:root{
+  /* Plum Guide checkout, sampled from plumguide.com/book/payment */
+  --page:#f9f9f9;
+  --card:#ffffff;
+  --ink:#262626;
+  --ink-2:#4a4a4a;
+  --muted:#767676;
+  --line:#ececec;
+  --mustard:#f5b232;
+  --mustard-soft:#ffd98f;
+  --mustard-ring:#fde9bd;
+  --track:#eee8e3;
+  --cream:#fcf6e6;
+  --link:#8a6a2e;
+  --fee:#b9831c;
+  --save:#e3f1e7;
+  --save-ink:#2f6b44;
+
+  /* settings bar */
+  --bar:#1c1c1c;
+  --bar-2:#2a2a2a;
+  --bar-ink:#f2f2f2;
+  --bar-muted:#9a9a9a;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);color:var(--ink);font-family:"DM Sans","Helvetica Neue",Arial,sans-serif;font-weight:400;letter-spacing:.03em;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+
+/* ---------- Prototype controls bar ---------- */
+/* Sticky light bar along the top with a dropdown per setting. */
+.settings{letter-spacing:normal;--c-line:#e3e3e3;--c-chip:#d6d6d6;--c-ink:#333;--c-muted:#808080;--c-on:#111;
+  position:sticky;top:0;z-index:20;background:#fff;color:var(--c-ink);border-bottom:1px solid var(--c-line);box-shadow:0 4px 16px rgba(0,0,0,.06);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;font-size:12px}
+/* Desktop: the controls float as a rounded box at the top */
+body:not(.m375) .settings{top:16px;margin:16px auto 0;width:calc(100% - 32px);max-width:1180px;border:1px solid var(--c-line);border-radius:16px;box-shadow:0 8px 28px rgba(0,0,0,.08);overflow:hidden}
+body:not(.m375) .settings.collapsed .settings-head{border-bottom:0}
+.settings-head{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--c-line)}
+.settings-head strong{font-size:14px;font-weight:600;color:#444}
+.settings-head .spacer{flex:1}
+/* The header strip is dark with light text, above the light settings */
+.settings-head{background:#161616;color:#f2f2f2;border-bottom-color:#161616}
+.settings-head strong{color:#fff}
+.settings-head .code{background:#2b2b2b;color:#cfcfcf}
+.settings-head .btn{background:#2b2b2b;border-color:#3d3d3d;color:#f2f2f2}
+.settings-head .btn:hover{border-color:#777}
+.settings .settings-head select{background:#2b2b2b url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23ccc' stroke-width='1.3'/%3E%3C/svg%3E") no-repeat right 9px center;border-color:#3d3d3d;color:#f2f2f2}
+.settings-head .pick-opt{background:#2b2b2b;border-color:#3d3d3d;color:#f2f2f2}
+.settings-head .pick-opt:hover{border-color:#777}
+.settings-head .pick-opt.on{border-color:#fff;box-shadow:inset 0 0 0 .5px #fff}
+.settings-body{display:flex;flex-wrap:wrap;align-items:flex-start;gap:14px 36px;padding:12px 16px 14px}
+.settings.collapsed .settings-body{display:none}
+.btn{background:#fff;border:1px solid var(--c-chip);border-radius:8px;padding:4px 10px;font-size:12px;color:var(--c-ink);cursor:pointer}
+.btn:hover{border-color:#b5b5b5}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;background:#f1f1f1;padding:3px 7px;border-radius:6px;color:#555;white-space:nowrap}
+.group{display:flex;flex-direction:column;gap:6px;min-width:0}
+.group h3{margin:0;font-size:12px;font-weight:600;color:#444}
+.group h3 b{color:#aaa;font-weight:600;margin-right:5px}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.settings .row[hidden]{display:none}
+.hint-line{margin-top:-4px;font-size:12px;color:#8a8a8a}
+.sub-label{flex-basis:100%;margin-top:4px;font-size:12px;font-weight:600;color:#666}
+.settings select{appearance:none;-webkit-appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23555' stroke-width='1.3'/%3E%3C/svg%3E") no-repeat right 9px center;border:1px solid var(--c-chip);border-radius:8px;padding:5px 28px 5px 9px;font:inherit;font-size:12px;color:var(--c-ink);cursor:pointer;max-width:100%}
+.settings select:hover{border-color:#b5b5b5}
+.settings select:focus{outline:none;border-color:var(--c-on)}
+.settings select:disabled{opacity:.4;cursor:not-allowed}
+.settings label{display:flex;align-items:center;gap:6px;color:#555;cursor:pointer}
+.settings label:has(input:disabled){opacity:.4;cursor:not-allowed}
+.settings input[type=checkbox]{appearance:none;-webkit-appearance:none;width:14px;height:14px;margin:0;background:#fff;border:1px solid #b5b5b5;border-radius:3px;cursor:pointer;flex:none}
+.settings input[type=checkbox]:checked{background:var(--c-on) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='8'%3E%3Cpath d='M1 4l2.5 2.5L9 1' fill='none' stroke='%23fff' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat center;border-color:var(--c-on)}
+
+/* ---------- Stage ---------- */
+.stage{padding:64px 16px 80px;display:flex;justify-content:center;align-items:flex-start;gap:40px}
+.col{width:100%;max-width:620px;transition:max-width .2s}
+.side{flex:none;width:380px}
+@media (max-width:1060px){.stage{flex-direction:column;align-items:center}.side{width:100%;max-width:620px;margin-top:0}}
+/* Mobile preview: a 375px-wide screen, stacked as a phone checkout (options, summary, then the button) */
+body.m375 .stage{flex-direction:column;align-items:stretch;gap:24px;width:393px;max-width:100%;margin:44px auto 64px;padding:44px 24px 32px;background:var(--page);border-radius:44px;box-shadow:0 0 0 1px rgba(0,0,0,.04),0 24px 60px rgba(0,0,0,.14)}
+/* the phone is an iPhone 16 screen (393 x 852); the checkout scrolls inside it */
+body.m375 .stage{justify-content:flex-start;height:852px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+body.m375 .stage::-webkit-scrollbar{display:none}
+/* Mobile: the phone moves left and the controls float beside it as a panel, options shown as a list */
+body.m375 .stage{margin-left:max(40px, calc(50vw - 376px));margin-right:auto}
+/* starts level with the top of the phone and scrolls with the page, never clipped */
+body.m375 .settings{position:absolute;top:44px;left:calc(max(40px, 50vw - 376px) + 445px);width:300px;overflow:hidden;margin-bottom:40px;border:1px solid var(--c-line);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.12)}
+body.m375 .settings-head{flex-wrap:wrap;gap:12px 8px}
+body.m375 .settings-head .spacer{display:none}
+/* Mobile: Hide sits beside the heading; hidden, the panel shrinks to just that */
+body.m375 .settings-head strong{flex:1 0 calc(100% - 72px)}
+body.m375 #toggle{order:-1;margin-left:auto}
+body.m375 .settings-head strong{order:-2}
+body.m375 .settings.collapsed{width:auto}
+body.m375 .settings.collapsed .settings-head{padding-bottom:10px}
+body.m375 .settings.collapsed .settings-head > :not(strong):not(#toggle){display:none}
+body.m375 .settings.collapsed .settings-head strong{flex:0 0 auto;margin-right:12px}
+body.m375 .settings-body{flex-direction:column;flex-wrap:nowrap;gap:22px}
+body.m375 .group{width:100%;gap:10px}
+body.m375 .settings .row{row-gap:10px}
+body.m375 .picks{row-gap:10px}
+body.m375 .settings select{display:none}
+/* Treatment (benefit style) stays a dropdown everywhere */
+.picks[data-for=benStyle]{display:none!important}
+body.m375 .settings #benStyle{display:inline-block}
+/* Desktop controls: the pill bar, styled like the mobile panel */
+body.m375 .settings-pills{display:none}
+body:not(.m375) #settings{display:none}  /* desktop shows the pill bar only; the dropdown bar stays as the source of truth */
+.settings-pills .picks{display:flex;row-gap:10px}
+.settings-pills .settings-head .picks{width:auto;flex-wrap:nowrap}
+.settings-pills .group{gap:10px;flex-shrink:0}
+.settings-pills .settings-body .pick-opt{white-space:nowrap}
+.settings-pills .row{row-gap:10px}
+.settings-pills .row[hidden]{display:flex;visibility:hidden}
+.settings-pills [data-id=benStyleRow]{flex-direction:column;align-items:flex-start;row-gap:6px}  /* label above the dropdown, so Benefit is only as wide as its longest pill */  /* Treatment keeps its space when hidden, so the columns never shift */
+.settings-pills .settings-body{display:grid;grid-template-columns:repeat(7,auto);justify-content:space-between;gap:20px}
+.settings-pills .settings-body .pick-opt{padding:5px 8px}  /* one column per setting, side by side (wraps on narrow windows) */
+.settings-pills .settings-body .picks{flex-direction:column;align-items:flex-start;row-gap:6px}  /* options stacked, one per line */
+.picks{display:none;flex-wrap:wrap;gap:6px;width:100%}
+body.m375 .picks{display:flex}
+body.m375 .settings-head .picks{flex-basis:100%;order:3}
+.pick-opt{display:inline-flex;align-items:center;white-space:nowrap;background:#fff;border:1px solid var(--c-chip);border-radius:8px;padding:5px 10px;font:inherit;font-size:12px;color:var(--c-ink);cursor:pointer}
+.pick-opt:hover{border-color:#b5b5b5}
+.pick-opt .pk-l{display:none}  /* letters stay in the markup and the variant code, not on screen */
+.pick-opt.on{border-color:var(--c-on);box-shadow:inset 0 0 0 .5px var(--c-on)}
+body.m375 .stage > *, body.m375 .col > *{flex-shrink:0}
+body.m375 .col{display:contents}
+body.m375 h2.section{order:1;margin-bottom:-10px;font-size:20px}
+body.m375 #options{order:2}
+body.m375 .side{order:3;width:100%;max-width:none}
+body.m375 #after{order:4}
+body.m375 #after .cta{margin-top:0}
+body.m375 .opt{padding:18px 16px;gap:20px}  /* text starts 56px in, as on desktop */
+body.m375 .desc{margin-right:40px}
+/* On mobile the summary title sits above its box, like Payment options */
+.side-title{display:none}
+body.m375 h2.side-title{display:block;margin:0 0 14px}
+body.m375 .summary h4{display:none}
+body.m375 .side .summary{border-radius:0;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+body.m375 .summary{border-radius:20px}
+body.m375 .summary-in{padding:20px 16px 16px}
+body.m375 .s-instant{padding:16px}
+body.m375 .modal{max-width:393px;border-radius:24px;padding:28px 20px 24px}
+body.m375 .modal .close{top:18px;right:20px}
+h2.section{font-weight:500;font-size:22px;line-height:1.3;margin:0 0 14px}
+
+.card{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.opt{position:relative;display:flex;gap:12px;padding:22px 24px;cursor:pointer;border-top:1px solid var(--line)}
+.opt:first-child{border-top:0}
+.opt.sel::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--mustard)}
+.col.mobile .opt{padding:18px 16px;gap:12px}
+
+.radio{flex:none;width:20px;height:20px;border-radius:50%;border:1px solid var(--ink);margin-top:1px;background:#fff}
+.sel .radio{border-color:var(--mustard);background:radial-gradient(circle,var(--mustard) 0 5.5px,var(--mustard-ring) 6px 100%)}
+
+.opt-main{flex:1;min-width:0}
+.opt-top{display:flex;align-items:flex-start;gap:12px}
+.opt-titles{flex:1;min-width:0}
+.title{font-weight:500;font-size:18px;line-height:1.35;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+.desc{font-size:16px;line-height:1.5;color:#1d1d1d;margin-top:4px;margin-right:32px}  /* 56px from the card's right edge, matching the left */
+.incl{font-weight:400}
+.benefit{display:flex;gap:6px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--ink-2);margin-top:8px}
+.benefit svg{flex:none;margin-top:3px}
+.benefit.green{color:var(--save-ink)}
+.benefit.pill{display:flex;width:fit-content;align-items:center;gap:5px;background:var(--save);color:var(--save-ink);border:1px solid #cfe6d6;border-radius:999px;padding:3px 10px 3px 8px;font-size:12px;line-height:1.3}
+.benefit.pill svg{margin-top:0}
+.benefits{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px}
+.benefits .benefit{margin-top:0}
+.benefits:has(.pill){column-gap:8px}
+.m-benefits{display:flex;flex-direction:column;gap:6px;margin:0 0 14px}
+.m-benefits .benefit{margin-top:0;font-size:14px;color:var(--ink)}
+.note{font-size:12px;line-height:1.4;color:var(--muted);margin-top:3px}
+.more{display:inline-block;margin-top:10px;font-size:16px;color:#704F0A;text-decoration:underline;text-decoration-color:#704F0A;text-underline-offset:3px;cursor:pointer;background:none;border:0;padding:0}
+
+.pill{display:inline-flex;align-items:center;font-size:11px;font-weight:500;letter-spacing:.02em;padding:2px 8px;border-radius:999px;background:#f3f3f3;color:#555;border:1px solid var(--line);white-space:nowrap}
+
+.amt-right{text-align:right;flex:none}
+.amt-right .v{font-weight:500;font-size:16px;line-height:1.35}
+.amt-right .l{font-size:12px;color:var(--muted)}
+.amt-hero{margin-top:8px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.amt-hero .v{font-family:Georgia,serif;font-size:34px;line-height:1.05;letter-spacing:-.01em}
+.amt-hero .l{font-size:13px;color:var(--ink-2)}
+
+/* deposit chooser (Pay over time as a product) */
+.chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chips + .desc{margin-top:12px}
+.desc b{font-weight:500;color:var(--ink)}
+.desc-sub{display:block;color:#636363;font-size:14px}
+.chip{flex:1;min-width:120px;text-align:center;border:1px solid #d9d9d9;border-radius:999px;background:#fff;padding:10px 16px;cursor:pointer}
+.chip .k{font-weight:500;font-size:14px}
+.chip .s{font-size:12px;color:var(--muted);margin-top:2px}
+.chip.on{border-color:var(--mustard);background:#fffaf0;box-shadow:inset 0 0 0 1px var(--mustard)}
+
+/* ---------- Progress variants ---------- */
+.prog{margin-top:16px}
+.pb-labels{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--ink-2);line-height:1.5}
+.pb-labels .r{text-align:right}
+.pb-labels b{display:block;font-weight:500;color:var(--ink);font-size:13px}
+.pb{height:8px;border-radius:99px;background:var(--track);overflow:hidden;margin-top:8px}
+.pb i{display:block;height:100%;background:var(--mustard-soft);border-radius:99px}
+.pb i.fill{transition:width .6s cubic-bezier(.2,.7,.2,1)}
+.tl{position:relative;padding-left:4px}
+.tl-item{position:relative;display:flex;gap:14px;padding-bottom:16px}
+.tl-item:last-child{padding-bottom:0}
+/* small dots (unlike the 20px radios): filled black = today, hollow = later */
+.tl-item::before{content:"";position:absolute;left:4px;top:17px;bottom:-2px;width:1px;background:#cfcfcf}
+.tl-item:last-child::before{display:none}
+.tl-dot{flex:none;width:9px;height:9px;margin-top:5px;border-radius:50%;border:1px solid var(--ink);background:#fff}
+.tl-dot.now{background:var(--ink)}
+.tl-body{flex:1;display:flex;justify-content:space-between;gap:12px;font-size:13px;line-height:1.45}
+.tl-body .when{color:var(--ink-2)}
+.tl-body .when b{color:var(--ink);font-weight:500;display:block}
+.tl-body .v{font-weight:500;text-align:right;white-space:nowrap}
+
+.rings{display:flex;gap:40px}
+.ring-item{display:flex;flex-direction:column;align-items:center;text-align:center;font-size:13px;line-height:1.4;color:var(--ink-2)}
+.ring-item svg{margin-bottom:8px}
+.ring-item b{font-weight:500;color:var(--ink)}
+
+.feeline{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--fee);margin-top:10px;padding-top:8px;border-top:1px dashed #ead9b0}
+.feeline.in-row{margin-top:2px;border:0;padding-top:0}
+
+/* ---------- Summary + CTA ---------- */
+.summary{background:#fff;border-radius:24px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden}
+.summary-in{padding:24px 24px 20px}
+.summary h4{margin:0 0 12px;font-weight:500;font-size:20px}
+.s-row{display:flex;justify-content:space-between;gap:12px;font-size:14px;line-height:1.5;padding:2px 0}
+.s-row.disc{color:var(--save-ink)}
+.s-code{display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:500;padding:16px 0 0;border-top:1px solid #DAD4D0;margin:28px 0 0}
+.s-div.s-gap{margin:16px 0 14px}
+.s-instant{display:flex;gap:14px;background:var(--cream);padding:18px 24px 20px;font-size:14px;line-height:1.5}
+.s-instant svg{flex:none;margin-top:2px}
+.s-instant b{display:block;font-weight:500}
+.s-row.muted{color:var(--muted);padding-left:12px}
+.s-row.fee{color:var(--fee)}
+.s-row.strong{font-weight:500;font-size:14px}
+.s-row.big{font-weight:500;font-size:15px}
+.s-row.big .v{font-size:18px}
+/* Due today when it changes: the characters fade out one by one and the new ones fade in (A), or it counts through amounts (B) */
+.s-row .v.tick{font-variant-numeric:tabular-nums}
+.dg-out{display:inline-block;animation:dueOut .14s ease-in both}
+.dg-in{display:inline-block;animation:dueIn .2s ease-out both}
+.amt-out{animation:dueOut .1s ease-in both}
+.amt-in{animation:dueIn .16s ease-out both}
+@keyframes dueOut{from{opacity:1}to{opacity:0}}
+@keyframes dueIn{from{opacity:0}to{opacity:1}}
+.s-space{height:8px}
+.s-div{height:1px;background:var(--line);margin:10px 0}
+/* Pay over time rows open out (and fold away) instead of popping in */
+.s-grow{display:grid;grid-template-rows:1fr}
+.s-grow > div{min-height:0;overflow:hidden}
+/* In: the space opens, then the rows fade in. Out: the rows fade out, then the space closes.
+   Due today sits below the fee row, so it's hidden while the space moves it (see tickDue's hold). */
+.s-grow.in{animation:sGrow .3s cubic-bezier(.2,.7,.2,1) .2s both}
+/* Coming in, the labels show as the space opens and the amounts fade in top to bottom
+   (fee, then Due today, Due later, Total). Going out, the rows all leave together. */
+.s-grow.in .v{animation:sFade .4s ease-out both}
+.s-grow.in.fee .v{animation-delay:.45s}
+.s-grow.in.later .s-row .v{animation-delay:.65s}
+.s-grow.in.later .s-row.strong .v{animation-delay:.8s}
+/* Total first: fee, Total, Due later, then Due today last */
+.s-grow.in.later.top .s-row.strong .v{animation-delay:.6s}
+.s-grow.in.later.top .s-row:not(.strong) .v{animation-delay:.75s}
+.s-grow.out{animation:sGrow .3s cubic-bezier(.4,0,.6,1) .3s reverse both}
+.s-grow.out > div > *{animation:sFade .2s ease-in .1s reverse both}
+@keyframes sGrow{from{grid-template-rows:0fr}to{grid-template-rows:1fr}}
+@keyframes sFade{from{opacity:0}to{opacity:1}}
+.cta{margin-top:24px;width:100%;border:0;background:var(--mustard);color:var(--ink);font-weight:500;font-size:14px;letter-spacing:.08em;text-transform:uppercase;padding:18px 16px;cursor:pointer}
+.cta-sub{font-size:12px;color:var(--muted);text-align:center;margin-top:8px}
+
+/* ---------- Modal ---------- */
+.scrim{position:fixed;inset:0;background:rgba(30,30,30,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:30}
+.scrim.open{display:flex}
+.modal{background:#fff;border-radius:32px;max-width:560px;width:100%;padding:36px 36px 32px;position:relative;max-height:90vh;overflow:auto}
+.modal .close{position:absolute;top:24px;right:28px;font-size:16px;background:none;border:0;cursor:pointer;color:var(--ink-2)}
+.modal h3{margin:4px 0 12px;font-weight:500;font-size:20px}
+.modal p{font-size:16px;line-height:1.55;margin:0 0 14px}
+.modal ul{margin:0;padding-left:18px;font-size:16px;line-height:1.55}
+.modal li{margin-bottom:12px}
+.modal b{font-weight:500}
+.modal h4{margin:26px 0 6px;font-weight:500;font-size:16px}
+/* modal: payment timeline, divider, tick list */
+.modal .m-sub{color:var(--ink-2);margin-bottom:22px}
+.m-tl .tl-body{font-size:16px;line-height:1.5}
+.m-tl .tl-dot{margin-top:7px}
+.m-tl .tl-item::before{top:21px}
+.m-tl .tl-item{padding-bottom:20px}
+.m-tl .tl-item:last-child{padding-bottom:0}
+.modal .m-total{margin:24px 0 0;font-size:16px}
+.m-div{height:1px;background:var(--line,#e6e6e6);margin:24px 0 0}
+.modal ul.m-ticks{list-style:none;padding:0}
+.m-ticks li{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px}
+.m-ticks svg{flex:none;width:14px;height:14px;margin-top:5px}
+.modal h3{padding-right:56px}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bar);color:#fff;font:12px -apple-system,system-ui,sans-serif;padding:8px 14px;border-radius:6px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:40}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="settings" id="settings">
+  <div class="settings-head">
+    <strong>Prototype controls</strong>
+    <span class="code" id="code" title="Variant code: percentage · fee location · fee name · amount · benefit · progress · animation"></span>
+    <span class="spacer"></span>
+    <select id="width" title="Preview width">
+      <option value="desktop">Desktop</option>
+      <option value="mobile">Mobile</option>
+    </select>
+    <button class="btn" id="copy">Copy link to this variant</button>
+    <button class="btn" id="reset">Defaults</button>
+    <button class="btn" id="toggle">Hide</button>
+  </div>
+  <div class="settings-body">
+    <div class="group">
+      <h3><b>1</b>Percentage</h3>
+      <select id="plans" title="How much Pay over time takes today">
+        <option value="10">A · 10%</option>
+        <option value="50">B · 50%</option>
+      </select>
+    </div>
+    <div class="group">
+      <h3><b>2</b>Fee location</h3>
+      <div class="row">
+        <select id="fee" title="How the fee is shown">
+          <option value="sentence">A · In the description</option>
+          <option value="progress">B · In the progress</option>
+          <option value="badge">C · Badge on instalments</option>
+        </select>
+      </div>
+      <div class="row">
+        <label><input type="checkbox" id="nonRefund"> Non-refundable fee</label>
+      </div>
+    </div>
+    <div class="group">
+      <h3><b>3</b>Fee name</h3>
+      <select id="fname" title="What the fee is called">
+        <option value="plan">A · Payment plan</option>
+        <option value="pot">B · Pay over time</option>
+      </select>
+    </div>
+    <div class="group">
+      <h3><b>4</b>Amount to pay</h3>
+      <div class="row">
+        <select id="amt">
+          <option value="inline">A · In description</option>
+          <option value="right-sel">B · Price column</option>
+          <option value="hidden">C · Not in options</option>
+        </select>
+      </div>
+      <div class="row">
+        <label><input type="checkbox" id="cta"> Amount on pay button</label>
+      </div>
+    </div>
+    <div class="group">
+      <h3><b>5</b>Benefit</h3>
+      <div class="row">
+        <select id="benefit" title="Where the benefits show">
+          <option value="modal">A · Modal only</option>
+          <option value="both">B · In option (selected)</option>
+          <option value="always">C · In option (always on)</option>
+        </select>
+      </div>
+      <div class="row" id="benStyleRow">
+        <div class="sub-label">Treatment</div>
+        <select id="benStyle" title="How the inline benefits look">
+          <option value="grey">Grey text</option>
+          <option value="green">Green text</option>
+          <option value="pill">Green pill</option>
+        </select>
+      </div>
+    </div>
+    <div class="group">
+      <h3><b>6</b>Progress</h3>
+      <select id="prog">
+        <option value="bar">A · Progress bar</option>
+        <option value="tl">B · Timeline</option>
+        <option value="ring">C · Ring</option>
+      </select>
+    </div>
+    <div class="group">
+      <h3><b>7</b>Animation</h3>
+      <div class="hint-line">Switch option to preview</div>
+      <select id="anim" title="How the payment summary changes">
+        <option value="simple">A · Simple fade</option>
+        <option value="fade">B · Fade digit by digit</option>
+        <option value="count">C · Count to new amount</option>
+        <option value="none">D · None</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<main class="stage">
+  <div class="col" id="col">
+    <h2 class="section">Payment options</h2>
+    <div class="card" id="options" role="radiogroup" aria-label="Payment options"></div>
+    <div id="after"></div>
+  </div>
+  <aside class="side" id="side"></aside>
+</main>
+
+<div class="scrim" id="scrim">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <button class="close" id="mClose">Close</button>
+    <div id="mBody"></div>
+  </div>
+</div>
+<div class="toast" id="toast">Link copied</div>
+
+<script>
+const DEFAULTS = {
+  pkg:'product', prog:'bar', fee:'sentence', benefit:'modal', benStyle:'grey',
+  amt:'inline', cta:false, nonRefund:false, fname:'plan', anim:'simple', order:'total',
+  name:'none', plans:'10', cur:'GBP', total:6720.70, f10:75, f50:60, when:'today', date:'19 Dec 2026', cancel:'10 Dec 2026', width:'mobile'
+};
+const FIELDS = Object.keys(DEFAULTS);
+const LETTER = {
+  plans:['10','50'],
+  prog:['bar','tl','ring'],
+  fee:['sentence','progress','badge'],
+  amt:['inline','right-sel','hidden'],
+  fname:['plan','pot'],
+  anim:['simple','fade','count','none'],
+  order:['total','today']
+};
+
+let S = {...DEFAULTS};
+let sel = 'full';     // 'full' | 50 | 10 | 'split' (set to the second option on load, see firstSplit)
+let dep = 10;         // chosen deposit inside Pay over time-as-a-product
+
+const $ = id => document.getElementById(id);
+
+/* ---------- state <-> URL ---------- */
+function readHash(){
+  const p = new URLSearchParams(location.hash.slice(1));
+  for (const k of FIELDS){
+    if (!p.has(k)) continue;
+    const d = DEFAULTS[k], v = p.get(k);
+    S[k] = typeof d === 'boolean' ? v === '1' : typeof d === 'number' ? (parseFloat(v) || 0) : v;
+  }
+  // Links saved before options were removed
+  if (!LETTER.fee.includes(S.fee)) S.fee = DEFAULTS.fee;
+  if (!LETTER.amt.includes(S.amt)) S.amt = DEFAULTS.amt;
+  S.pkg = DEFAULTS.pkg;  // always two options: Pay in full today / Pay over time
+  if (!LETTER.plans.includes(S.plans)) S.plans = DEFAULTS.plans;
+  if (!LETTER.prog.includes(S.prog)) S.prog = DEFAULTS.prog;
+  if (!LETTER.fname.includes(S.fname)) S.fname = DEFAULTS.fname;
+  if (!LETTER.anim.includes(S.anim)) S.anim = DEFAULTS.anim;
+  S.order = DEFAULTS.order;  // the order setting was removed: always Total, Due later, then Due today
+  if (S.benefit === 'inline') S.benefit = 'both';
+  if (!['modal', 'both', 'always'].includes(S.benefit)) S.benefit = DEFAULTS.benefit;
+  if (!['grey', 'green', 'pill'].includes(S.benStyle)) S.benStyle = DEFAULTS.benStyle;
+  S.name = DEFAULTS.name;  // the fee name setting was removed
+  const s = p.get('sel');
+  sel = firstSplit();  // preselect the second option so setting changes show straight away
+  if (s === 'full') sel = 'full';
+  else if (s === 'split') sel = 'split';
+  else if (s === '50' || s === '10') sel = Number(s);
+  if (p.has('dep')) dep = Number(p.get('dep'));
+}
+function writeHash(){
+  const p = new URLSearchParams();
+  for (const k of FIELDS){
+    if (S[k] === DEFAULTS[k]) continue;
+    p.set(k, typeof S[k] === 'boolean' ? (S[k] ? '1' : '0') : S[k]);
+  }
+  p.set('sel', sel);
+  if (S.pkg === 'product' && dep !== 10) p.set('dep', dep);
+  history.replaceState(null, '', '#' + p.toString());
+}
+function syncControls(){
+  for (const k of FIELDS){
+    const el = $(k);
+    if (!el) continue;
+    if (el.type === 'checkbox') el.checked = S[k]; else el.value = S[k];
+  }
+  $('benStyleRow').hidden = S.benefit === 'modal';  // style only matters when benefits show
+  // the pill copy of the controls mirrors the real ones
+  for (const c of document.querySelectorAll('.settings-pills input[type=checkbox][data-id]')) c.checked = $(c.dataset.id).checked;
+  for (const r of document.querySelectorAll('.settings-pills [data-id=benStyleRow]')) r.hidden = $('benStyleRow').hidden;
+  for (const sel of document.querySelectorAll('.settings-pills select[data-id]')) sel.value = $(sel.dataset.id).value;
+  syncPicks();
+}
+
+// In the mobile view each dropdown is shown as a list of options to click; the dropdown stays the source of truth.
+function buildPicks(){
+  for (const sel of document.querySelectorAll('.settings select')){
+    const box = document.createElement('div');
+    box.className = 'picks';
+    box.dataset.for = sel.id;
+    for (const o of sel.options){
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'pick-opt'; b.dataset.v = o.value;
+      // The variant letter ("A · ") only shows on the selected pill
+      const m = o.text.match(/^([A-Z]) · (.*)$/);
+      if (m){ const l = document.createElement('span'); l.className = 'pk-l'; l.textContent = `${m[1]} · `; b.append(l, m[2]); } else b.textContent = o.text;
+      b.onclick = () => { if (sel.value !== o.value){ sel.value = o.value; sel.dispatchEvent(new Event('change')); } };
+      box.append(b);
+    }
+    sel.after(box);
+  }
+}
+// Desktop: a second copy of the controls bar, laid out like the mobile panel (pills, no dropdowns), to compare the two.
+// It has no controls of its own: every click is passed on to the real control in the first bar.
+function buildPillBar(){
+  const bar = $('settings').cloneNode(true);
+  bar.removeAttribute('id');
+  bar.classList.add('settings-pills');
+  for (const el of bar.querySelectorAll('[id]')){ el.dataset.id = el.id; el.removeAttribute('id'); }
+  for (const s of bar.querySelectorAll('select')) if (s.dataset.id !== 'benStyle') s.remove();  // Treatment stays a dropdown
+  bar.addEventListener('click', e => {
+    const p = e.target.closest('.pick-opt');
+    if (p){ const sel = $(p.parentElement.dataset.for); if (sel.value !== p.dataset.v){ sel.value = p.dataset.v; sel.dispatchEvent(new Event('change')); } return; }
+    const b = e.target.closest('button[data-id]');
+    if (!b) return;
+    if (b.dataset.id === 'toggle'){ const c = bar.classList.toggle('collapsed'); b.textContent = c ? 'Show' : 'Hide'; }
+    else $(b.dataset.id).click();
+  });
+  bar.addEventListener('change', e => {
+    const c = e.target;
+    if (c.type === 'checkbox' && c.dataset.id){ const o = $(c.dataset.id); o.checked = c.checked; o.dispatchEvent(new Event('change')); }
+    if (c.tagName === 'SELECT' && c.dataset.id){ const o = $(c.dataset.id); o.value = c.value; o.dispatchEvent(new Event('change')); }
+  });
+  $('settings').after(bar);
+}
+
+function syncPicks(){
+  // Dropdowns show the option name only; its letter (A, B…) is kept for the variant code
+  for (const sel of document.querySelectorAll('.settings select')){
+    for (const o of sel.options){
+      o.dataset.full ??= o.text;
+      const m = o.dataset.full.match(/^[A-Z] · (.*)$/);
+      if (m) o.text = m[1];
+    }
+  }
+  for (const box of document.querySelectorAll('.picks')){
+    const v = $(box.dataset.for).value;
+    for (const b of box.children) b.classList.toggle('on', b.dataset.v === v);
+  }
+}
+
+
+/* ---------- money ---------- */
+const fmt = n => new Intl.NumberFormat('en-GB', {style:'currency', currency:S.cur}).format(n);
+const fmtFee = n => new Intl.NumberFormat('en-GB', {style:'currency', currency:S.cur, minimumFractionDigits: n % 1 ? 2 : 0}).format(n);
+
+// What the fee is called in the copy (Fee name setting).
+const planFee = () => S.fname === 'pot' ? 'Pay over time fee' : 'payment plan fee';
+const feeName = () => S.name === 'none' ? 'Additional cost' : S.name;
+const BENEFITS = ['Your dates, secured', 'Automatic payments', "Today's exchange rate, locked in"];
+const splits = () => S.plans === 'both' ? [50, 10] : [Number(S.plans)];
+const firstSplit = () => S.pkg === 'product' ? 'split' : splits()[0];
+
+// Where 50% is the only split on offer it carries the 10% amount (product doc rule).
+function feeFor(p){
+  if (p === 50 && S.plans === 'both') return S.f50;
+  return S.f10;
+}
+// Mirrors the live checkout: the later payment is rounded down to whole units, today takes the pennies.
+function calc(p){
+  const total = S.total;
+  if (!p) return {total, today: total, later: 0, fee: 0, grand: total};
+  const fee = feeFor(p);
+  const laterBase = Math.floor(total * (1 - p/100));
+  const deposit = Math.round((total - laterBase) * 100) / 100;
+  return {
+    total, fee, deposit, laterBase,
+    today: deposit + (S.when === 'today' ? fee : 0),
+    later: laterBase + (S.when === 'later' ? fee : 0),
+    grand: total + fee
+  };
+}
+
+/* ---------- copy ---------- */
+// "No name": the fee is shown as a bare amount; line items fall back to a neutral label.
+const noName = () => S.name === 'none';
+const feeWithName = f => noName() ? fmtFee(f) : `${fmtFee(f)} ${feeName()}`;
+// "the £75 plan fee" reads better than "the £75 for Plan fee"
+
+function titleFor(p, c){
+  if (!p) return S.pkg === 'amt' ? `Pay ${fmt(c.total)} now` : 'Pay in full';
+  switch (S.pkg){
+    case 'amt': return `Pay ${fmt(c.today)} now, the rest later`;
+    case 'deposit': return p === 10 ? 'Pay a 10% deposit' : 'Pay half now';
+    case 'secure': return p === 10 ? 'Secure your stay with 10%' : 'Pay half now';
+    default: return `Pay ${p}% now, the rest later`;
+  }
+}
+
+// Split lines say how the balance is collected ("interest-free" is left out: the fee may count as interest).
+function descFor(p, c, selected){
+  const inline = S.amt === 'inline';
+  if (!p){
+    let s = S.pkg === 'amt' || !inline ? `One payment, nothing more to pay later` : `<b>${fmt(c.total)} today</b> and that's it`;
+    return s;
+  }
+  const collect = `We'll automatically collect the remaining balance on ${S.date}.`;
+  const collectAmt = `We'll automatically collect the remaining ${fmt(c.later)} on ${S.date}.`;
+  let s;
+  switch (S.pkg){
+    case 'amt': s = collectAmt; break;
+    case 'product': {
+      // Today's amount for the chosen deposit; fee A names the fee in the same sentence.
+      // Fee name "Pay over time" names the product in the sentence instead
+      const fee = !(S.fee === 'sentence' && c.fee) ? ''
+        : S.fname === 'pot' ? `Your first payment includes a ${fmtFee(c.fee)} ${S.nonRefund ? '' : 'refundable '}fee for Pay over time.`
+        : `Your first payment includes a ${S.nonRefund ? `${fmtFee(c.fee)} fee` : `refundable fee of ${fmtFee(c.fee)}`} for spreading the cost.`;
+      // B and C keep the amount out of the sentence (B shows it in the price column instead).
+      const lead = inline ? `<b>${fmt(c.today)} today</b>, and the remaining balance on ${S.date}.` : `We'll collect the remaining balance automatically on ${S.date}.`;
+      return `${lead}${fee ? `<span class="desc-sub">${fee}</span>` : ''}`;
+    }
+    default: {
+      // In the description: the fee sits right after today's amount.
+      const note = S.fee === 'sentence' && c.fee ? ` (includes a ${fmtFee(c.fee)} ${S.nonRefund ? '' : 'refundable '}${planFee()})` : '';
+      s = inline ? `Pay ${fmt(c.today)} today${note}. ${collect}` : collect;
+    }
+  }
+  // Without the amount in the sentence, the fee goes at the end instead.
+  if (S.fee === 'sentence' && c.fee && (!inline || S.pkg === 'amt' || S.pkg === 'product')) s += ` Includes a ${fmtFee(c.fee)} ${S.nonRefund ? '' : 'refundable '}${planFee()}.`;
+  return s;
+}
+
+
+/* ---------- pieces ---------- */
+const tagIcon = `<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6.6 1.5H10.5v3.9L5.4 10.5 1.5 6.6z" fill="none" stroke="currentColor" stroke-linejoin="round"/><circle cx="8.3" cy="3.7" r=".8" fill="currentColor"/></svg>`;
+const tickIcon = `<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.4l2.6 2.6L10 3.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+function amountBlock(p, c, where, selected){
+  const v = p ? c.today : c.total;
+  if (where === 'right' && S.amt === 'right-sel' && selected)
+    return `<div class="amt-right"><div class="v">${fmt(v)}</div></div>`;
+  return '';
+}
+
+function badges(p, c, selected){
+  if (!p) return '';
+  if (S.fee === 'badge' && c.fee) return `<span class="pill">+${feeWithName(c.fee)}</span>`;
+  return '';
+}
+
+function feeRowText(c){
+  return `${noName() ? 'Additional cost' : feeName()}`;
+}
+
+function progress(p, c){
+  const grand = c.grand;
+  // Fee option B spells out the deposit + fee for today; C shows today's total with the fee folded in.
+  const todayAmt = S.fee === 'progress' ? `${fmt(c.deposit)} <span class="incl">+ ${fmtFee(c.fee)} ${S.nonRefund ? '' : 'refundable '}${planFee()}</span>`
+    : S.fee === 'badge' ? `${fmt(c.today)} <span class="incl">(includes ${fmtFee(c.fee)} ${planFee()})</span>`
+    : fmt(c.today);
+
+  if (S.prog === 'bar'){
+    const pct = (c.today / grand) * 100;
+    return `<div class="prog">
+      <div class="pb-labels">
+        <div>Today<b>${todayAmt}</b></div>
+        <div class="r">${S.date}<b>${fmt(c.later)}</b></div>
+      </div>
+      <div class="pb"><i style="width:${pct}%"></i></div>
+    </div>`;
+  }
+
+  if (S.prog === 'tl'){
+    const item = (dot, when, sub, v) => `<div class="tl-item"><span class="tl-dot ${dot}"></span><div class="tl-body"><div class="when"><b>${when}</b>${sub}</div>${v ? `<div class="v">${v}</div>` : ''}</div></div>`;
+    return `<div class="prog tl">
+      ${item('now', 'Today', `${p}% to confirm your booking`, todayAmt)}
+      ${item('', S.date, 'Collected automatically', fmt(c.later))}
+    </div>`;
+  }
+
+  if (S.prog === 'ring'){
+    // One ring per payment, filled to the cumulative share paid after it (PayPal "Pay in 3" pattern).
+    const r = 20, C = 2 * Math.PI * r;
+    const ring = (frac, v, label) => `<div class="ring-item">
+      <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true">
+        <circle cx="26" cy="26" r="${r}" fill="none" stroke="var(--track)" stroke-width="6"/>
+        <circle cx="26" cy="26" r="${r}" fill="none" stroke="var(--mustard)" stroke-width="6" stroke-dasharray="${C * frac} ${C}" transform="rotate(-90 26 26)" stroke-linecap="round"/>
+      </svg>
+      ${v ? `<b>${v}</b>` : ''}<span>${label}</span>
+    </div>`;
+    return `<div class="prog rings">
+      ${ring(c.today / grand, todayAmt, 'due today')}
+      ${ring(1, fmt(c.later), S.date)}
+    </div>`;
+  }
+  return '';
+}
+
+/* ---------- options ---------- */
+// When a different option (or deposit) is picked, the progress bar starts empty and fills to its share.
+let lastPick = null;
+function fillBar(){
+  const pick = `${sel}/${dep}`, changed = lastPick !== null && pick !== lastPick;
+  lastPick = pick;
+  if (!changed || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const bar = document.querySelector('#options .opt.sel .pb i');
+  if (!bar) return;
+  const w = bar.style.width;
+  bar.style.width = '0';
+  bar.getBoundingClientRect();  // commit the empty bar before filling
+  bar.classList.add('fill');
+  bar.style.width = w;
+}
+
+function optionHTML({key, p, title, desc, body, selected, lead = ''}){
+  const c = calc(p);
+  return `<div class="opt ${selected ? 'sel' : ''}" role="radio" aria-checked="${selected}" tabindex="0" data-key="${key}">
+    <span class="radio"></span>
+    <div class="opt-main">
+      <div class="opt-top">
+        <div class="opt-titles">
+          <div class="title">${title}${badges(p, c, selected)}</div>
+          ${lead}
+        </div>
+        ${amountBlock(p, c, 'right', selected)}
+      </div>
+      ${desc ? `<div class="desc">${desc}</div>` : ''}
+      ${body}
+    </div>
+  </div>`;
+}
+
+// Shown on the selected option only, unless "Show always" is ticked.
+// The modal always lists the benefits; B adds them to the selected option, C to every option.
+const showBenefits = selected => (S.benefit === 'both' && selected) || S.benefit === 'always';
+const benefitLine = selected => showBenefits(selected)
+  ? `<div class="benefits">${BENEFITS.map(t => `<div class="benefit ${S.benStyle}">${tickIcon}<span>${t}</span></div>`).join('')}</div>` : '';
+
+function splitBody(p, c, selected){
+  let b = amountBlock(p, c, 'body');
+  // For Pay over time as a product the benefit is added in render, below the description.
+  if (S.pkg !== 'product') b += benefitLine(selected);
+  b += `<button class="more" data-more="${p}">How it works</button>`;
+  if (selected) b += progress(p, c);
+  return b;
+}
+
+function render(){
+  document.body.classList.toggle('m375', S.width === 'mobile');
+  const opts = [];
+  const full = calc(0);
+  let fullBody = amountBlock(0, full, 'body');
+  opts.push(optionHTML({key:'full', p:0, title:titleFor(0, full), desc:descFor(0, full), body:fullBody, selected: sel === 'full'}));
+
+  const ps = splits();
+  if (S.pkg === 'product'){
+    if (!ps.includes(dep)) dep = ps[0];
+    const p = dep, c = calc(p), on = sel !== 'full';
+    let chips = '';
+    if (on && ps.length > 1){  // deposit boxes only once Pay over time is chosen, right under the title
+      chips = `<div class="chips">${ps.slice().sort((a,b)=>a-b).map(q => {
+        return `<button class="chip ${on && q === dep ? 'on' : ''}" data-dep="${q}"><div class="k">Pay ${q}% today</div></button>`;
+      }).join('')}</div>`;
+    }
+    const body = benefitLine(on) + splitBody(p, c, on);
+    // The title names the percentage; the description underneath gives today's amount.
+    opts.push(optionHTML({key:'split', p, title:`Pay ${p}% now`, desc: descFor(p, c), body, selected:on, lead:chips}));
+  } else {
+    for (const p of ps){
+      const c = calc(p);
+      opts.push(optionHTML({key:String(p), p, title:titleFor(p, c), desc:descFor(p, c, sel === p), body:splitBody(p, c, sel === p), selected: sel === p}));
+    }
+  }
+  $('options').innerHTML = opts.join('');
+  fillBar();
+  $('col').classList.toggle('mobile', S.width === 'mobile');
+  renderAfter();
+  renderCode();
+}
+
+function selectedP(){
+  if (sel === 'full') return 0;
+  return S.pkg === 'product' ? dep : sel;
+}
+
+let lastP = null, lastRows = [], foldTimer = null;
+const SLOTS = ['fee', 'later'];
+function renderAfter(){
+  const p = selectedP(), c = calc(p);
+  // Stay price, back-calculated from the booking total: 14 nights less a weekly discount.
+  const nights = 14, nightly = Math.round(S.total / 0.95 / nights * 100) / 100, stay = nightly * nights;
+  const feeName = planFee();
+  // Refundable fees are named as such; a non-refundable one is just "Payment plan fee".
+  const feeRow = S.nonRefund ? feeName[0].toUpperCase() + feeName.slice(1) : `Refundable ${feeName}`;
+  const chevron = `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const bolt = `<svg width="18" height="22" viewBox="0 0 18 22" aria-hidden="true"><path d="M10.5 1.5L3 12.5h5.5L7 20.5l8-11.5H9.5z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>`;
+  // Rows that only Pay over time has open out when it's picked and fold away when it isn't.
+  const motion = S.anim !== 'none' && lastP !== null && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const grow = (slot, html, extra = '') => {
+    if (html){ lastRows[slot] = html; return `<div class="s-grow ${SLOTS[slot]}${extra}${motion && !lastP ? ' in' : ''}"><div>${html}</div></div>`; }
+    return motion && lastP && lastRows[slot] ? `<div class="s-grow ${SLOTS[slot]}${extra} out"><div>${lastRows[slot].replace(/ id="\w+"/g, '')}</div></div>` : '';
+  };
+  // Payment summary sits in the right-hand column: stay price, what's due today, then the code field.
+  // The fee sits with the stay rows, so Due today and the instalments add up to the total.
+  $('side').innerHTML = `<h2 class="section side-title">Payment summary</h2><div class="summary"><div class="summary-in">
+      <h4>Payment summary</h4>
+      <div class="s-row"><span>${fmt(nightly)} x ${nights} nights</span><span class="v">${fmt(stay)}</span></div>
+      <div class="s-row disc"><span>Weekly discount</span><span class="v">- ${fmt(stay - S.total)}</span></div>
+      <div class="s-row"><span>Service &amp; cleaning fees</span><span class="v">Included</span></div>
+      ${grow(0, p ? `<div class="s-row"><span>${feeRow}</span><span class="v">${fmt(c.fee)}</span></div>` : '')}
+      <div class="s-div s-gap"></div>
+      ${S.order === 'total' ? grow(1, p ? `<div class="s-row strong"><span>${S.nonRefund ? 'Total' : 'Total booking'}</span><span class="v tick" id="totalAmt">${fmt(c.today + c.later)}</span></div>
+             <div class="s-row"><span>Due ${S.date}</span><span class="v tick" id="laterAmt">${fmt(c.later)}</span></div>
+             <div class="s-space"></div>` : '', ' top') : ''}
+      <div class="s-row big"><span>${p ? 'Due today' : 'Total booking'}</span><span class="v tick" id="dueAmt">${fmt(c.today)}</span></div>
+      ${S.order === 'today' ? grow(1, p ? `${S.nonRefund ? '<div class="s-div"></div>' : ''}
+             <div class="s-row"${S.nonRefund ? ' style="margin-top:8px"' : ''}><span>Due ${S.date}</span><span class="v tick" id="laterAmt">${fmt(c.later)}</span></div>
+             <div class="s-div"></div>
+             <div class="s-row strong"><span>${S.nonRefund ? 'Total' : 'Total booking'}</span><span class="v tick" id="totalAmt">${fmt(c.today + c.later)}</span></div>` : '') : ''}
+      <div class="s-code"><span>Add a code</span>${chevron}</div>
+    </div>
+    <div class="s-instant">${bolt}<div><b>Instant book</b>Once your payment goes through, your booking is confirmed instantly.</div></div>
+  </div>`;
+  // One amount at a time, top to bottom. When rows open or fold, Due today moves with them,
+  // so it fades out first and the new amount only shows once it's back at rest.
+  const opening = p && !lastP, closing = !p && lastP;
+  const top = S.order === 'total';  // Total first, Due today last
+  tickDue('dueAmt', c.today, DUE_WAIT + (top && !opening && !closing ? 300 : 0), opening ? (top ? 880 : 520) : closing ? 620 : 0);
+  tickDue('laterAmt', p ? c.later : null, DUE_WAIT + 150);
+  tickDue('totalAmt', p ? c.today + c.later : null, DUE_WAIT + (top ? 0 : 300));
+  lastP = p;
+  clearTimeout(foldTimer);
+  foldTimer = setTimeout(() => document.querySelectorAll('.s-grow.out').forEach(el => el.remove()), 650);
+  let html = `<button class="cta">${S.cta ? `Pay ${fmt(c.today)} securely now` : 'Pay securely now'}</button>`;
+  if (S.cta && p) html += `<div class="cta-sub">Then ${fmt(c.later)} on ${S.date}</div>`;
+  $('after').innerHTML = html;
+}
+
+// When a summary amount changes (Due today, Due later, Total), animate it as set in Due today animation.
+// to is null when the row isn't shown, so a row that reappears starts fresh rather than animating.
+const lastAmt = {}, amtTimer = {};
+const DUE_WAIT = 100;  // ms the old amount holds after a click before animating
+// hold: the earliest the new amount may show (ms after the click), e.g. once the row has stopped moving.
+function tickDue(id, to, wait = DUE_WAIT, hold = 0){
+  const from = lastAmt[id] ?? null, el = $(id);
+  lastAmt[id] = to;
+  clearTimeout(amtTimer[id]);
+  if (!el || to === null || S.anim === 'none' || from === null || from === to || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (S.anim === 'simple'){
+    // The whole amount fades out, then the new one fades in.
+    const b = fmt(to);
+    el.innerHTML = `<span class="amt-out" style="animation-delay:${wait}ms">${fmt(from)}</span>`;
+    amtTimer[id] = setTimeout(() => {
+      el.innerHTML = `<span class="amt-in">${b}</span>`;
+      amtTimer[id] = setTimeout(() => { el.textContent = b; }, 180);
+    }, Math.max(wait + 100, hold));
+    return;
+  }
+  wait = Math.max(wait, hold - 100);  // the other styles start once the row is still
+  if (S.anim === 'fade'){
+    // Old characters fade out one by one; once they've all gone, the new ones fade in.
+    // Swapping while nothing is visible means a change in length can't shift the amount mid-animation.
+    const a = fmt(from), b = fmt(to), gap = 12;
+    const chars = (s, cls, wait = 0) => [...s].map((ch, i) => `<span class="${cls}" style="animation-delay:${wait + i * gap}ms">${ch}</span>`).join('');
+    el.innerHTML = chars(a, 'dg-out', wait);
+    amtTimer[id] = setTimeout(() => {
+      el.innerHTML = chars(b, 'dg-in');
+      amtTimer[id] = setTimeout(() => { el.textContent = b; }, b.length * gap + 220);  // leave plain text behind
+    }, wait + (a.length - 1) * gap + 160);
+    return;
+  }
+  // 14 eased steps, 36ms apart: 0.5s in all, slowing as it nears the new amount
+  const steps = Array.from({length: 13}, (_, i) => 1 - Math.pow(1 - (i + 1) / 14, 3));
+  const next = i => {
+    el.textContent = fmt(i < steps.length ? from + (to - from) * steps[i] : to);
+    if (i < steps.length) amtTimer[id] = setTimeout(() => next(i + 1), 36);
+  };
+  el.textContent = fmt(from);
+  amtTimer[id] = setTimeout(() => next(0), wait);
+}
+
+function renderCode(){
+  const l = k => String.fromCharCode(65 + LETTER[k].indexOf(S[k]));
+  $('code').textContent = `1${l('plans')} · 2${l('fee')} · 3${l('fname')} · 4${l('amt')} · 5${String.fromCharCode(65 + $('benefit').selectedIndex)} · 6${l('prog')} · 7${l('anim')}`;
+  for (const c of document.querySelectorAll('.settings-pills [data-id=code]')) c.textContent = $('code').textContent;
+}
+
+/* ---------- modal ---------- */
+// Long-form date for the modal ("19 Dec 2026" -> "19 December 2026"); falls back to the text as typed.
+function longDate(t){
+  const d = new Date(t);
+  return isNaN(d) ? t : d.toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
+}
+
+// Short date offset by n days, e.g. shortDate('19 Dec 2026', -3) -> '16 Dec 2026'.
+function shortDate(t, n = 0, year = true){
+  const d = new Date(t);
+  if (isNaN(d)) return t;
+  d.setDate(d.getDate() + n);
+  return d.toLocaleDateString('en-GB', year ? {day:'numeric', month:'short', year:'numeric'} : {day:'numeric', month:'short'});
+}
+
+function openModal(p){
+  const c = calc(p);
+  const feeLabel = planFee();
+  const fee = fmtFee(c.fee);
+  const step = (dot, when, sub) => `<div class="tl-item"><span class="tl-dot ${dot}"></span><div class="tl-body"><div class="when"><b>${when}</b>${sub}</div></div></div>`;
+  $('mBody').innerHTML = `
+    <h3 id="mTitle">Pay over time</h3>
+    <p class="m-sub">Book your stay now and pay the rest closer to your trip.</p>
+    <div class="tl m-tl">
+      ${step('now', 'Today', S.nonRefund ? `${p}% of your booking total, plus a ${fee} ${feeLabel}` : `${p}% of your stay, plus a ${fee} refundable ${feeLabel}`)}
+      ${step('', shortDate(S.date, -3), `We'll email you a reminder`)}
+      ${step('', S.date, 'We\'ll automatically charge the rest to your saved payment method')}
+    </div>
+    <p class="m-total">Total booking when choosing Pay over time: <b>${fmt(c.today + c.later)}</b></p>
+    <div class="m-div"></div>
+    <h4>About the fee</h4>
+    <div class="m-benefits">${(S.nonRefund ? BENEFITS : [...BENEFITS, '100% refundable']).map(t => `<div class="benefit">${tickIcon}<span>${t}</span></div>`).join('')}</div>
+    <p>${S.nonRefund ? `It's non-refundable, but everything else follows your stay's cancellation policy as usual.` : `If you cancel and you're due a refund, you'll get the fee back in full.`}</p>
+    <h4>Good to know</h4>
+    <p>Keep your payment details up to date. If we can't collect the payment on ${shortDate(S.date, 0, false).replace(' ', '&nbsp;')}, your booking may be cancelled.</p>`;
+  $('scrim').classList.add('open');
+  $('mClose').focus();
+}
+
+function closeModal(){ $('scrim').classList.remove('open'); }
+
+/* ---------- events ---------- */
+for (const k of FIELDS){
+  const el = $(k);
+  if (!el) continue;
+  el.addEventListener(el.tagName === 'SELECT' || el.type === 'checkbox' ? 'change' : 'input', () => {
+    const d = DEFAULTS[k];
+    S[k] = el.type === 'checkbox' ? el.checked : typeof d === 'number' ? (parseFloat(el.value) || 0) : el.value;
+    if (k === 'pkg' && sel !== 'full') sel = S.pkg === 'product' ? 'split' : splits()[0];
+    if (k === 'plans' && sel !== 'full' && S.pkg !== 'product' && !splits().includes(sel)) sel = splits()[0];
+    syncControls(); writeHash(); render();
+  });
+}
+
+$('options').addEventListener('click', e => {
+  const more = e.target.closest('[data-more]');
+  if (more){ e.stopPropagation(); openModal(Number(more.dataset.more)); return; }
+  const chip = e.target.closest('[data-dep]');
+  if (chip){ dep = Number(chip.dataset.dep); sel = 'split'; writeHash(); render(); return; }
+  const opt = e.target.closest('.opt');
+  if (!opt) return;
+  const k = opt.dataset.key;
+  sel = k === 'full' ? 'full' : k === 'split' ? 'split' : Number(k);
+  writeHash(); render();
+});
+$('options').addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('opt')){ e.preventDefault(); e.target.click(); }
+});
+
+$('mClose').onclick = closeModal;
+$('scrim').addEventListener('click', e => { if (e.target === $('scrim')) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+$('toggle').onclick = () => {
+  const c = $('settings').classList.toggle('collapsed');
+  $('toggle').textContent = c ? 'Show' : 'Hide';
+};
+$('reset').onclick = () => { S = {...DEFAULTS}; sel = firstSplit(); dep = 10; syncControls(); writeHash(); render(); };
+$('copy').onclick = async () => {
+  try { await navigator.clipboard.writeText(location.href); } catch (e) {}
+  const t = $('toast'); t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1400);
+};
+
+buildPicks();
+buildPillBar();
+readHash();
+syncControls();
+render();
+</script>
+</body>
+</html>

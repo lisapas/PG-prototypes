@@ -179,7 +179,14 @@ h2.section{font-weight:500;font-size:22px;line-height:1.3;margin:0 0 14px}
 .m-benefits{display:flex;flex-direction:column;gap:6px;margin:0 0 14px}
 .m-benefits .benefit{margin-top:0;font-size:14px;color:var(--ink)}
 .note{font-size:12px;line-height:1.4;color:var(--muted);margin-top:3px}
-.more{display:inline-block;margin-top:10px;font-size:16px;color:#704F0A;text-decoration:underline;text-decoration-color:#704F0A;text-underline-offset:3px;cursor:pointer;background:none;border:0;padding:0}
+.o-grow{display:grid;grid-template-rows:1fr}
+.o-grow > div{min-height:0;overflow:hidden}
+.o-grow .prog{margin-bottom:6px}  /* 16px to How it works with its own 10px; folds to nothing when closed */
+.o-grow.in{animation:sGrow .35s cubic-bezier(.2,.7,.2,1) both}
+.o-grow.in > div{animation:sFade .3s ease-out .1s both}
+.o-grow.out{animation:sGrow .3s cubic-bezier(.4,0,.6,1) .05s reverse both}
+.o-grow.out > div{animation:sFade .15s ease-in reverse both}
+.more{display:inline-block;margin-top:10px;font-size:16px;color:#704F0A;text-decoration:underline;text-decoration-color:#704F0A;text-decoration-thickness:1px;text-underline-offset:3px;cursor:pointer;background:none;border:0;padding:0}
 
 .pill{display:inline-flex;align-items:center;font-size:11px;font-weight:500;letter-spacing:.02em;padding:2px 8px;border-radius:999px;background:#f3f3f3;color:#555;border:1px solid var(--line);white-space:nowrap}
 
@@ -245,6 +252,7 @@ h2.section{font-weight:500;font-size:22px;line-height:1.3;margin:0 0 14px}
 .s-row.strong{font-weight:500;font-size:14px}
 .s-row.big{font-weight:500;font-size:15px}
 .s-row.big .v{font-size:18px}
+.s-row.big{align-items:baseline}  /* label and the larger amount share a baseline */
 /* Due today when it changes: the characters fade out one by one and the new ones fade in (A), or it counts through amounts (B) */
 .s-row .v.tick{font-variant-numeric:tabular-nums}
 .dg-out{display:inline-block;animation:dueOut .14s ease-in both}
@@ -280,6 +288,31 @@ h2.section{font-weight:500;font-size:22px;line-height:1.3;margin:0 0 14px}
 /* ---------- Modal ---------- */
 .scrim{position:fixed;inset:0;background:rgba(30,30,30,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:30}
 .scrim.open{display:flex}
+/* Opening: the dim background fades in over the whole screen while, separately, the drawer slides up from the bottom */
+.scrim.open{animation:scrimIn .3s ease-out both}
+.scrim.open .modal{animation:drawerUp .4s cubic-bezier(.2,.8,.2,1) both}
+@keyframes scrimIn{from{background-color:rgba(30,30,30,0)}to{background-color:rgba(30,30,30,.45)}}
+@keyframes drawerUp{from{transform:translateY(100vh)}to{transform:none}}
+body.m375 .stage > .scrim.open .modal{animation-name:sheetUp}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+/* Closing plays it backwards: the drawer slides down while the background fades out */
+.scrim.closing{animation:scrimOut .28s ease-in both}
+.scrim.closing .modal{animation:drawerDown .3s cubic-bezier(.4,0,1,1) both}
+body.m375 .stage > .scrim.closing .modal{animation-name:sheetDown}
+@keyframes scrimOut{from{background-color:rgba(30,30,30,.45)}to{background-color:rgba(30,30,30,0)}}
+@keyframes drawerDown{from{transform:none}to{transform:translateY(100vh)}}
+@keyframes sheetDown{from{transform:none}to{transform:translateY(100%)}}
+@media (prefers-reduced-motion: reduce){.scrim.open,.scrim.open .modal{animation:none!important}}
+/* Mobile summary: the price breakdown hides behind a link and opens in the same sheet as How it works */
+.s-more{display:none}
+body.m375 .s-break{display:none}
+body.m375 .s-more{display:inline-block;margin-top:14px}
+.m-breakdown .s-row{font-size:16px;padding:4px 0}
+.m-breakdown .s-row.strong{font-size:16px}
+/* Mobile: How it works opens inside the phone screen, as a sheet from the bottom */
+body.m375 .stage{position:relative}
+body.m375 .stage > .scrim{position:absolute;left:0;right:0;bottom:auto;align-items:flex-end;padding:0;z-index:5}
+body.m375 .stage > .scrim .modal{max-width:none;width:100%;max-height:88%;border-radius:24px 24px 0 0;padding:28px 24px 32px}
 .modal{background:#fff;border-radius:32px;max-width:560px;width:100%;padding:36px 36px 32px;position:relative;max-height:90vh;overflow:auto}
 .modal .close{position:absolute;top:24px;right:28px;font-size:16px;background:none;border:0;cursor:pointer;color:var(--ink-2)}
 .modal h3{margin:4px 0 12px;font-weight:500;font-size:20px}
@@ -602,7 +635,7 @@ function titleFor(p, c){
 function descFor(p, c, selected){
   const inline = S.amt === 'inline';
   if (!p){
-    let s = S.pkg === 'amt' || !inline ? `One payment, nothing more to pay later` : `<b>${fmt(c.total)} today</b> and that's it`;
+    let s = S.pkg === 'amt' || !inline ? `One payment, nothing more to pay later` : `${fmt(c.total)} today and that's it`;
     return s;
   }
   const collect = `We'll automatically collect the remaining balance on ${S.date}.`;
@@ -614,10 +647,10 @@ function descFor(p, c, selected){
       // Today's amount for the chosen deposit; fee A names the fee in the same sentence.
       // Fee name "Pay over time" names the product in the sentence instead
       const fee = !(S.fee === 'sentence' && c.fee) ? ''
-        : S.fname === 'pot' ? `Your first payment includes a ${fmtFee(c.fee)} ${S.nonRefund ? '' : 'refundable '}fee for Pay over time.`
-        : `Your first payment includes a ${S.nonRefund ? `${fmtFee(c.fee)} fee` : `refundable fee of ${fmtFee(c.fee)}`} for spreading the cost.`;
+        : S.fname === 'pot' ? `Inc. ${fmtFee(c.fee)} ${S.nonRefund ? '' : 'refundable '}fee for Pay over time.`
+        : `Inc. ${fmtFee(c.fee)} ${S.nonRefund ? '' : 'refundable '}fee for spreading the cost.`;
       // B and C keep the amount out of the sentence (B shows it in the price column instead).
-      const lead = inline ? `<b>${fmt(c.today)} today</b>, and the remaining balance on ${S.date}.` : `We'll collect the remaining balance automatically on ${S.date}.`;
+      const lead = inline ? `${fmt(c.today)} today, and the remaining balance on ${S.date}.` : `We'll collect the remaining balance automatically on ${S.date}.`;
       return `${lead}${fee ? `<span class="desc-sub">${fee}</span>` : ''}`;
     }
     default: {
@@ -700,9 +733,10 @@ function progress(p, c){
 /* ---------- options ---------- */
 // When a different option (or deposit) is picked, the progress bar starts empty and fills to its share.
 let lastPick = null;
+let lastSel = null;
 function fillBar(){
   const pick = `${sel}/${dep}`, changed = lastPick !== null && pick !== lastPick;
-  lastPick = pick;
+  lastPick = pick; lastSel = sel;
   if (!changed || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const bar = document.querySelector('#options .opt.sel .pb i');
   if (!bar) return;
@@ -741,13 +775,18 @@ function splitBody(p, c, selected){
   let b = amountBlock(p, c, 'body');
   // For Pay over time as a product the benefit is added in render, below the description.
   if (S.pkg !== 'product') b += benefitLine(selected);
+  // Selected: the progress opens out above How it works; deselected, it folds away again
+  if (selected) b += `<div class="o-grow${optAnim === 'open' ? ' in' : ''}"><div>${progress(p, c)}</div></div>`;
+  else if (optAnim === 'close') b += `<div class="o-grow out"><div>${progress(p, c)}</div></div>`;
   b += `<button class="more" data-more="${p}">How it works</button>`;
-  if (selected) b += progress(p, c);
   return b;
 }
 
+let optAnim = '';  // 'open' or 'close' while the Pay over time option is opening or closing
 function render(){
   document.body.classList.toggle('m375', S.width === 'mobile');
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  optAnim = still || lastSel === null || lastSel === sel ? '' : sel === 'full' ? 'close' : lastSel === 'full' ? 'open' : '';
   const opts = [];
   const full = calc(0);
   let fullBody = amountBlock(0, full, 'body');
@@ -765,7 +804,7 @@ function render(){
     }
     const body = benefitLine(on) + splitBody(p, c, on);
     // The title names the percentage; the description underneath gives today's amount.
-    opts.push(optionHTML({key:'split', p, title:`Pay ${p}% now`, desc: descFor(p, c), body, selected:on, lead:chips}));
+    opts.push(optionHTML({key:'split', p, title: p == 50 ? 'Pay half now' : `Pay ${p}% now`, desc: descFor(p, c), body, selected:on, lead:chips}));
   } else {
     for (const p of ps){
       const c = calc(p);
@@ -784,7 +823,7 @@ function selectedP(){
   return S.pkg === 'product' ? dep : sel;
 }
 
-let lastP = null, lastRows = [], foldTimer = null;
+let lastP = null, lastRows = [], foldTimer = null, breakdownHTML = '';
 const SLOTS = ['fee', 'later'];
 function renderAfter(){
   const p = selectedP(), c = calc(p);
@@ -801,15 +840,23 @@ function renderAfter(){
     if (html){ lastRows[slot] = html; return `<div class="s-grow ${SLOTS[slot]}${extra}${motion && !lastP ? ' in' : ''}"><div>${html}</div></div>`; }
     return motion && lastP && lastRows[slot] ? `<div class="s-grow ${SLOTS[slot]}${extra} out"><div>${lastRows[slot].replace(/ id="\w+"/g, '')}</div></div>` : '';
   };
+  const stayRows = `<div class="s-row"><span>${fmt(nightly)} x ${nights} nights</span><span class="v">${fmt(stay)}</span></div>
+      <div class="s-row disc"><span>Weekly discount</span><span class="v">- ${fmt(stay - S.total)}</span></div>
+      <div class="s-row"><span>Service &amp; cleaning fees</span><span class="v">Included</span></div>`;
+  // On mobile these rows move into a "View breakdown" sheet
+  breakdownHTML = `${stayRows}
+      ${p ? `<div class="s-row"><span>${feeRow}</span><span class="v">${fmt(c.fee)}</span></div>` : ''}
+      <div class="s-div s-gap"></div>
+      <div class="s-row strong"><span>${S.nonRefund && p ? 'Total' : 'Total booking'}</span><span class="v">${fmt(c.today + c.later)}</span></div>`;
   // Payment summary sits in the right-hand column: stay price, what's due today, then the code field.
   // The fee sits with the stay rows, so Due today and the instalments add up to the total.
   $('side').innerHTML = `<h2 class="section side-title">Payment summary</h2><div class="summary"><div class="summary-in">
       <h4>Payment summary</h4>
-      <div class="s-row"><span>${fmt(nightly)} x ${nights} nights</span><span class="v">${fmt(stay)}</span></div>
-      <div class="s-row disc"><span>Weekly discount</span><span class="v">- ${fmt(stay - S.total)}</span></div>
-      <div class="s-row"><span>Service &amp; cleaning fees</span><span class="v">Included</span></div>
+      <div class="s-break">
+      ${stayRows}
       ${grow(0, p ? `<div class="s-row"><span>${feeRow}</span><span class="v">${fmt(c.fee)}</span></div>` : '')}
       <div class="s-div s-gap"></div>
+      </div>
       ${S.order === 'total' ? grow(1, p ? `<div class="s-row strong"><span>${S.nonRefund ? 'Total' : 'Total booking'}</span><span class="v tick" id="totalAmt">${fmt(c.today + c.later)}</span></div>
              <div class="s-row"><span>Due ${S.date}</span><span class="v tick" id="laterAmt">${fmt(c.later)}</span></div>
              <div class="s-space"></div>` : '', ' top') : ''}
@@ -818,6 +865,7 @@ function renderAfter(){
              <div class="s-row"${S.nonRefund ? ' style="margin-top:8px"' : ''}><span>Due ${S.date}</span><span class="v tick" id="laterAmt">${fmt(c.later)}</span></div>
              <div class="s-div"></div>
              <div class="s-row strong"><span>${S.nonRefund ? 'Total' : 'Total booking'}</span><span class="v tick" id="totalAmt">${fmt(c.today + c.later)}</span></div>` : '') : ''}
+      <button class="more s-more" data-breakdown>View breakdown</button>
       <div class="s-code"><span>Add a code</span>${chevron}</div>
     </div>
     <div class="s-instant">${bolt}<div><b>Instant book</b>Once your payment goes through, your booking is confirmed instantly.</div></div>
@@ -912,7 +960,7 @@ function openModal(p){
     <div class="tl m-tl">
       ${step('now', 'Today', S.nonRefund ? `${p}% of your booking total, plus a ${fee} ${feeLabel}` : `${p}% of your stay, plus a ${fee} refundable ${feeLabel}`)}
       ${step('', shortDate(S.date, -3), `We'll email you a reminder`)}
-      ${step('', S.date, 'We\'ll automatically charge the rest to your saved payment method')}
+      ${step('', S.date, 'Balance collected automatically')}
     </div>
     <p class="m-total">Total booking when choosing Pay over time: <b>${fmt(c.today + c.later)}</b></p>
     <div class="m-div"></div>
@@ -921,11 +969,32 @@ function openModal(p){
     <p>${S.nonRefund ? `It's non-refundable, but everything else follows your stay's cancellation policy as usual.` : `If you cancel and you're due a refund, you'll get the fee back in full.`}</p>
     <h4>Good to know</h4>
     <p>Keep your payment details up to date. If we can't collect the payment on ${shortDate(S.date, 0, false).replace(' ', '&nbsp;')}, your booking may be cancelled.</p>`;
-  $('scrim').classList.add('open');
-  $('mClose').focus();
+  openSheet();
 }
 
-function closeModal(){ $('scrim').classList.remove('open'); }
+function openBreakdown(){
+  $('mBody').innerHTML = `<h3 id="mTitle">Price breakdown</h3><div class="m-breakdown">${breakdownHTML}</div>`;
+  openSheet();
+}
+
+// On mobile the scrim covers just the visible part of the phone screen, which stops scrolling while it's open
+function openSheet(){
+  const sc = $('scrim'), st = document.querySelector('.stage');
+  if (S.width === 'mobile'){ st.append(sc); sc.style.top = st.scrollTop + 'px'; sc.style.height = st.clientHeight + 'px'; st.style.overflowY = 'hidden'; }
+  else { document.body.append(sc); sc.style.top = sc.style.height = ''; }
+  sc.classList.remove('closing');
+  sc.classList.add('open');
+  $('mClose').focus({preventScroll: true});  // don't let focus scroll the phone while the overlay slides in
+}
+
+function closeModal(){
+  const sc = $('scrim');
+  if (!sc.classList.contains('open') || sc.classList.contains('closing')) return;
+  const done = () => { sc.classList.remove('open', 'closing'); document.querySelector('.stage').style.overflowY = ''; };
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return done();
+  sc.classList.add('closing');
+  setTimeout(done, 300);  // after the slide-down
+}
 
 /* ---------- events ---------- */
 for (const k of FIELDS){
@@ -955,6 +1024,7 @@ $('options').addEventListener('keydown', e => {
   if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('opt')){ e.preventDefault(); e.target.click(); }
 });
 
+$('side').addEventListener('click', e => { if (e.target.closest('[data-breakdown]')) openBreakdown(); });
 $('mClose').onclick = closeModal;
 $('scrim').addEventListener('click', e => { if (e.target === $('scrim')) closeModal(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });

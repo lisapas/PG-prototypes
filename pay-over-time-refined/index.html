@@ -140,8 +140,8 @@ body.m375 .side{order:3;width:100%;max-width:none}
 body.m375 #after{order:4}
 body.m375 #after .cta{margin-top:0}
 body.m375 .opt{padding:18px 16px;gap:20px}  /* text starts 56px in, as on desktop */
-body.m375 .desc{margin-right:40px}
-body.m375 .desc-sub{margin-right:-40px}  /* the fee line may run into the right margin so it stays on one line */
+body.m375 .desc{margin-right:32px}  /* 48px from the right edge, matching the left */
+body.m375 .desc-sub{margin-right:-32px}  /* the fee line may run into the right margin so it stays on one line */
 /* On mobile the summary title sits above its box, like Payment options */
 .side-title{display:none}
 body.m375 h2.side-title{display:block;margin:0 0 14px}
@@ -182,7 +182,6 @@ h2.section{font-weight:500;font-size:22px;line-height:1.3;margin:0 0 14px}
 .note{font-size:12px;line-height:1.4;color:var(--muted);margin-top:3px}
 .o-grow{display:grid;grid-template-rows:1fr}
 .o-grow > div{min-height:0;overflow:hidden}
-.o-grow .prog{margin-bottom:6px}  /* 16px to How it works with its own 10px; folds to nothing when closed */
 .o-grow.in{animation:sGrow .35s cubic-bezier(.2,.7,.2,1) both}
 .o-grow.in > div{animation:sFade .3s ease-out .1s both}
 .o-grow.out{animation:sGrow .3s cubic-bezier(.4,0,.6,1) .05s reverse both}
@@ -268,19 +267,20 @@ h2.section{font-weight:500;font-size:22px;line-height:1.3;margin:0 0 14px}
 .s-grow{display:grid;grid-template-rows:1fr}
 .s-grow > div{min-height:0;overflow:hidden}
 /* In: the space opens, then the rows fade in. Out: the rows fade out, then the space closes.
+   Same timing as the option's progress (.o-grow), so the option and the summary move together.
    Due today sits below the fee row, so it's hidden while the space moves it (see tickDue's hold). */
-.s-grow.in{animation:sGrow .3s cubic-bezier(.2,.7,.2,1) .2s both}
+.s-grow.in{animation:sGrow .35s cubic-bezier(.2,.7,.2,1) both}
 /* Coming in, the labels show as the space opens and the amounts fade in top to bottom
    (fee, then Due today, Due later, Total). Going out, the rows all leave together. */
 .s-grow.in .v{animation:sFade .4s ease-out both}
-.s-grow.in.fee .v{animation-delay:.45s}
-.s-grow.in.later .s-row .v{animation-delay:.65s}
-.s-grow.in.later .s-row.strong .v{animation-delay:.8s}
+.s-grow.in.fee .v{animation-delay:.3s}
+.s-grow.in.later .s-row .v{animation-delay:.5s}
+.s-grow.in.later .s-row.strong .v{animation-delay:.65s}
 /* Total first: fee, Total, Due later, then Due today last */
-.s-grow.in.later.top .s-row.strong .v{animation-delay:.6s}
-.s-grow.in.later.top .s-row:not(.strong) .v{animation-delay:.75s}
-.s-grow.out{animation:sGrow .3s cubic-bezier(.4,0,.6,1) .3s reverse both}
-.s-grow.out > div > *{animation:sFade .2s ease-in .1s reverse both}
+.s-grow.in.later.top .s-row.strong .v{animation-delay:.45s}
+.s-grow.in.later.top .s-row:not(.strong) .v{animation-delay:.6s}
+.s-grow.out{animation:sGrow .3s cubic-bezier(.4,0,.6,1) .05s reverse both}
+.s-grow.out > div > *{animation:sFade .15s ease-in reverse both}
 @keyframes sGrow{from{grid-template-rows:0fr}to{grid-template-rows:1fr}}
 @keyframes sFade{from{opacity:0}to{opacity:1}}
 .cta{margin-top:24px;width:100%;border:0;background:var(--mustard);color:var(--ink);font-weight:500;font-size:14px;letter-spacing:.08em;text-transform:uppercase;padding:18px 16px;cursor:pointer}
@@ -651,7 +651,7 @@ function descFor(p, c, selected){
         : S.fname === 'pot' ? `Inc. ${fmtFee(c.fee)} ${S.nonRefund ? '' : 'refundable '}fee for Pay over time.`
         : `Inc. ${fmtFee(c.fee)} ${S.nonRefund ? '' : 'refundable '}fee for spreading the cost.`;
       // B and C keep the amount out of the sentence (B shows it in the price column instead).
-      const lead = inline ? `${fmt(c.today)} today, and the remaining balance on ${S.date}.` : `We'll collect the remaining balance automatically on ${S.date}.`;
+      const lead = inline ? `${fmt(c.today)} today, and the remaining on ${S.date}.` : `We'll collect the remaining balance automatically on ${S.date}.`;
       return `${lead}${fee ? `<span class="desc-sub">${fee}</span>` : ''}`;
     }
     default: {
@@ -776,10 +776,10 @@ function splitBody(p, c, selected){
   let b = amountBlock(p, c, 'body');
   // For Pay over time as a product the benefit is added in render, below the description.
   if (S.pkg !== 'product') b += benefitLine(selected);
-  // Selected: the progress opens out above How it works; deselected, it folds away again
+  b += `<button class="more" data-more="${p}">How it works</button>`;
+  // Selected: the progress opens out below How it works; deselected, it folds away again
   if (selected) b += `<div class="o-grow${optAnim === 'open' ? ' in' : ''}"><div>${progress(p, c)}</div></div>`;
   else if (optAnim === 'close') b += `<div class="o-grow out"><div>${progress(p, c)}</div></div>`;
-  b += `<button class="more" data-more="${p}">How it works</button>`;
   return b;
 }
 
@@ -875,12 +875,12 @@ function renderAfter(){
   // so it fades out first and the new amount only shows once it's back at rest.
   const opening = p && !lastP, closing = !p && lastP;
   const top = S.order === 'total';  // Total first, Due today last
-  tickDue('dueAmt', c.today, DUE_WAIT + (top && !opening && !closing ? 300 : 0), opening ? (top ? 880 : 520) : closing ? 620 : 0);
+  tickDue('dueAmt', c.today, DUE_WAIT + (top && !opening && !closing ? 300 : 0), opening ? (top ? 730 : 370) : closing ? 400 : 0);
   tickDue('laterAmt', p ? c.later : null, DUE_WAIT + 150);
   tickDue('totalAmt', p ? c.today + c.later : null, DUE_WAIT + (top ? 0 : 300));
   lastP = p;
   clearTimeout(foldTimer);
-  foldTimer = setTimeout(() => document.querySelectorAll('.s-grow.out').forEach(el => el.remove()), 650);
+  foldTimer = setTimeout(() => document.querySelectorAll('.s-grow.out').forEach(el => el.remove()), 450);
   let html = `<button class="cta">${S.cta ? `Pay ${fmt(c.today)} securely now` : 'Pay securely now'}</button>`;
   if (S.cta && p) html += `<div class="cta-sub">Then ${fmt(c.later)} on ${S.date}</div>`;
   $('after').innerHTML = html;

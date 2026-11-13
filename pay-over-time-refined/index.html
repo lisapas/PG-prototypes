@@ -966,7 +966,7 @@ function openModal(p){
     <div class="m-div"></div>
     <h4>About the fee</h4>
     <div class="m-benefits">${(S.nonRefund ? BENEFITS : [...BENEFITS, '100% refundable']).map(t => `<div class="benefit">${tickIcon}<span>${t}</span></div>`).join('')}</div>
-    <p>${S.nonRefund ? `It's non-refundable, but everything else follows your stay's cancellation policy as usual.` : `If you cancel and you're due a refund, you'll get the fee back in full.`}</p>
+    <p>${S.nonRefund ? `Your Pay over time fee follows the same refund terms as your stay, in line with your cancellation policy.` : `If you cancel and you're due a refund, you'll get the fee back in full.`}</p>
     <h4>Good to know</h4>
     <p>Keep your payment details up to date. If we can't collect the payment on ${shortDate(S.date, 0, false).replace(' ', '&nbsp;')}, your booking may be cancelled.</p>`;
   openSheet();

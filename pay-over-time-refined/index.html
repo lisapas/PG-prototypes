@@ -401,8 +401,7 @@ body.m375 .stage > .scrim .modal{max-width:none;width:100%;max-height:88%;border
       <div class="row">
         <select id="benefit" title="Where the benefits show">
           <option value="modal">A · Modal only</option>
-          <option value="both">B · In option (selected)</option>
-          <option value="always">C · In option (always on)</option>
+          <option value="both">B · In option</option>
         </select>
       </div>
       <div class="row" id="benStyleRow">
@@ -492,8 +491,8 @@ function readHash(){
   if (!LETTER.fname.includes(S.fname)) S.fname = DEFAULTS.fname;
   if (!LETTER.anim.includes(S.anim)) S.anim = DEFAULTS.anim;
   S.order = DEFAULTS.order;  // the order setting was removed: always Total, Due later, then Due today
-  if (S.benefit === 'inline') S.benefit = 'both';
-  if (!['modal', 'both', 'always'].includes(S.benefit)) S.benefit = DEFAULTS.benefit;
+  if (S.benefit === 'inline' || S.benefit === 'always') S.benefit = 'both';  // "always on" was merged into "In option"
+  if (!['modal', 'both'].includes(S.benefit)) S.benefit = DEFAULTS.benefit;
   if (!['grey', 'green', 'pill'].includes(S.benStyle)) S.benStyle = DEFAULTS.benStyle;
   S.name = DEFAULTS.name;  // the fee name setting was removed
   const s = p.get('sel');
@@ -769,9 +768,8 @@ function optionHTML({key, p, title, desc, body, selected, lead = ''}){
   </div>`;
 }
 
-// Shown on the selected option only, unless "Show always" is ticked.
-// The modal always lists the benefits; B adds them to the selected option, C to every option.
-const showBenefits = selected => (S.benefit === 'both' && selected) || S.benefit === 'always';
+// The modal always lists the benefits; B also shows them on the selected option.
+const showBenefits = selected => S.benefit === 'both' && selected;
 const benefitLine = selected => showBenefits(selected)
   ? `<div class="benefits">${BENEFITS.map(t => `<div class="benefit ${S.benStyle}">${tickIcon}<span>${t}</span></div>`).join('')}</div>` : '';
 
